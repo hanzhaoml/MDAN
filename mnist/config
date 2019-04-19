@@ -1,0 +1,49 @@
+batch_size: 128
+adapt: True
+adapt_scale: 1
+
+source_num: 1
+target_num: 1
+
+max_data_num: 12
+
+# eighter MULTI or PAIR
+adapt_loss_type:PAIR
+
+dann_loss: MIN
+class_loss_type: MAX
+
+# feature dimension for reading the image
+feature_row: 32
+feature_col: 32
+feature_ph_row: 32
+feature_ph_col: 32
+feature_cha: 3
+
+# the cropped image dimension as the input for the network
+
+leaky_param:0.01
+weight_decay:0.0004
+
+source_type1: MNIST
+source_type2: MNIST
+target_type1: MNIST
+
+test_file_name:../../video_analysis/file_list/test_list1.txt
+result_file_name: ../results/results1.txt
+
+model_def_name: classify_net
+
+init_learning_rate: 0.0001
+max_training_iter:100000
+test_per_iter:50
+save_per_iter: 200
+train_log_dir:logs/
+string_log_name: string_logs.txt
+model_dir:models/
+restore_model:False
+restore_model_name:None
+use_da: False
+
+# define the fraction of gpu
+gpu_fraction: 0.2
