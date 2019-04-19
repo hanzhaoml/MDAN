@@ -143,9 +143,7 @@ class Model(object):
         target_num = self.model_params["target_num"]
         source_target_num = source_num + target_num
 
-        #b,_,_,_ = feature.get_shape()
         b = self.b
-        #b,_ = feature.get_shape()
 
         single_b = tf.div(b, source_target_num)
         label_shape = tf.convert_to_tensor([single_b, 1])

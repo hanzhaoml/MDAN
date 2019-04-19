@@ -10,7 +10,7 @@ max_data_num: 12
 # eighter MULTI or PAIR
 adapt_loss_type:PAIR
 
-dann_loss: MIN
+dann_loss: SOFTMIN
 class_loss_type: MAX
 
 # feature dimension for reading the image
