@@ -29,7 +29,7 @@ parser.add_argument("-d", "--dimension", help="Number of features to be used in 
                     type=int, default=5000)
 parser.add_argument("-u", "--mu", help="Hyperparameter of the coefficient for the domain adversarial loss",
                     type=float, default=1e-2)
-parser.add_argument("-e", "--epoch", help="Number of training epochs", type=int, default=15)
+parser.add_argument("-e", "--epoch", help="Number of training epochs", type=int, default=1)
 parser.add_argument("-b", "--batch_size", help="Batch size during training", type=int, default=20)
 parser.add_argument("-o", "--mode", help="Mode of combination rule for MDANet: [maxmin|dynamic]", type=str, default="dynamic")
 # Compile and configure all the model parameters.
@@ -151,15 +151,17 @@ if args.model == "mdan":
             logger.info("Iteration {}, loss = {}".format(t, running_loss))
         time_end = time.time()
         # Test on other domains.
-        mdan.eval()
-        target_insts = torch.tensor(target_insts, requires_grad=False).to(device)
-        target_labels = torch.tensor(target_labels)
-        preds_labels = torch.max(mdan.inference(target_insts), 1)[1].cpu().data.squeeze_()
-        pred_acc = torch.sum(preds_labels == target_labels).item() / float(target_insts.size(0))
-        error_dicts[data_name[i]] = preds_labels.numpy() != target_labels.numpy()
-        logger.info("Prediction accuracy on {} = {}, time used = {} seconds.".
-                    format(data_name[i], pred_acc, time_end - time_start))
-        results[data_name[i]] = pred_acc
+        with torch.no_grad():
+            mdan.eval()
+            target_insts = torch.tensor(target_insts, requires_grad=False).to(device)
+            target_labels = torch.tensor(target_labels)
+            preds_labels = torch.max(mdan.inference(target_insts), 1)[1].cpu().squeeze_()
+            pred_acc = torch.sum(preds_labels == target_labels).item() / float(target_insts.size(0))
+            error_dicts[data_name[i]] = preds_labels.numpy() != target_labels.numpy()
+            logger.info("Prediction accuracy on {} = {}, time used = {} seconds.".
+                        format(data_name[i], pred_acc, time_end - time_start))
+            results[data_name[i]] = pred_acc
+
     logger.info("Prediction accuracy with multiple source domain adaptation using madnNet: ")
     logger.info(results)
     pickle.dump(error_dicts, open("{}-{}-{}-{}.pkl".format(args.name, args.frac, args.model, args.mode), "wb"))
