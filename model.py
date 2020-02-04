@@ -77,7 +77,5 @@ class MDANet(nn.Module):
         for hidden in self.hiddens:
             h_relu = F.relu(hidden(h_relu))
         # Classification probability.
-        softmax = self.softmax(h_relu)
-        log_softmax = F.log_softmax(softmax, dim=1)
-        logprobs = F.log_softmax(log_softmax(h_relu), dim=1)
+        logprobs = F.log_softmax(self.softmax(h_relu), dim=1)
         return logprobs
