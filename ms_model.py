@@ -34,8 +34,8 @@ class MDANet(nn.Module):
         self.num_neurons = [self.input_dim] + configs["hidden_layers"]
         self.num_domains = configs["num_domains"]
         # Parameters of hidden, fully-connected layers, feature learning component.
-        self.hiddens = nn.ModuleList([nn.Linear(self.num_neurons[i], self.num_neurons[i+1])
-                                      for i in range(self.num_hidden_layers)])
+        self.hiddens = nn.ModuleList([nn.ModuleList([nn.Linear(self.num_neurons[i], self.num_neurons[i+1])
+                                      for i in range(self.num_hidden_layers)]) for _ in range(self.num_domains)])
         # Parameter of the final softmax classification layer.
         self.softmax = nn.Linear(self.num_neurons[-1], configs["num_classes"])
         # Parameter of the domain classification layer, multiple sources single target domain adaptation.
@@ -55,10 +55,10 @@ class MDANet(nn.Module):
         # How to carry out multi source domain adaptation
         sh_relu, th_relu = sinputs, tinputs
         for i in range(self.num_domains):
-            for hidden in self.hiddens:
+            for hidden in self.hiddens[i]:
                 sh_relu[i] = F.relu(hidden(sh_relu[i]))
-        for hidden in self.hiddens:
-            th_relu = F.relu(hidden(th_relu))
+            for hidden in self.hiddens[i]:
+                th_relu[i] = F.relu(hidden(th_relu[i]))
 
         # Classification probabilities on k source domains.
         logprobs = []
@@ -69,13 +69,18 @@ class MDANet(nn.Module):
         sdomains, tdomains = [], []
         for i in range(self.num_domains):
             sdomains.append(F.log_softmax(self.domains[i](self.grls[i](sh_relu[i])), dim=1))
-            tdomains.append(F.log_softmax(self.domains[i](self.grls[i](th_relu)), dim=1))
+            tdomains.append(F.log_softmax(self.domains[i](self.grls[i](th_relu[i])), dim=1))
         return logprobs, sdomains, tdomains
 
     def inference(self, inputs):
         h_relu = inputs
-        for hidden in self.hiddens:
-            h_relu = F.relu(hidden(h_relu))
-        # Classification probability.
-        logprobs = F.log_softmax(self.softmax(h_relu), dim=1)
+        logprobs = []
+        for i in range(self.num_domains):
+            h_relu = inputs
+            for hidden in self.hiddens[i]:
+                h_relu = F.relu(hidden(h_relu))
+            # Classification probability.
+            softmax = self.softmax(h_relu)
+            log_softmax = F.log_softmax(softmax, dim=1)
+            logprobs.append(log_softmax)
         return logprobs
